@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>game dengan Javascript dan HTML5</title>
+
+    <!-- pembuatan style agar tampilan canvas sesuai dengan yang diinginkan -->
+    <style>
+        #canvas {
+            border: 1px solid;
+            width: 800px;
+            height: 500px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- membuat id canvas -->
+    <canvas id="canvas"></canvas>
+    <script>
+
+        //inisialisasi gambar dan memanggil gambar buaya
+        var bajul = new Image();
+        bajul.src = "bajultiny.png";
+        //inisialisasi background canvas
+        var bg = new Image();
+        bg.src = "bg2.png";
+        //inisialisasi gambar tiang 
+        var gambarTiang = new Image();
+        gambarTiang.src = "tiang.png";
+        //inisialisasi gambar buaya jika mati
+        var mati = new Image();
+        mati.src = "mati.png";
+
+
+        //fungsi untuk mengatur canvas
+        function mulaiKanvas() {
+            var canvas = document.getElementById('canvas'); // Memilih elemen HTML dengan id canvas yang telah dibuat di atas.
+            var context = canvas.getContext('2d'); // Membuat objek dari canvas yang dapat dimanfaatkan untuk menggambar atau diisi hal-hal lain.
+
+            canvas.width = canvas.scrollWidth;
+            canvas.height = canvas.scrollHeight;
+
+            //variabel untuk menyimpan width dan height
+            var cW = canvas.width;
+            var cH = canvas.height;
+
+            utama();//memanggil fungsi utama
+            function utama() {
+                //membuat fungsi background
+                function BG() {
+                    this.x = 10;
+                    this.render = function () {
+                        context.drawImage(bg, this.x--, 0);//untuk menampilkan background bergerak ke kiri
+                    }
+                }
+
+                var latar = new BG();//menampung fungsi BG ke dalam variabel latar
+                //membuat fungsi karakter yang berupa buaya
+                function Karakter() {
+                    this.x = 100; this.y = 200; this.w = 100, this.h = 100;//mengatur ukuran gambar
+                    this.render = function () {
+                        context.drawImage(bajul, this.x, this.y += 5);//memanggil gambar buaya dan mengatur jarak start
+                    }
+                }
+
+                var karakter = new Karakter();// menampung fungsi Karakter ke dalam variable karakter
+                var tiang = [];
+                //memanggil tambah tiang agar gambar tiang muncul
+                tambahTiang();
+                //fungsi untuk menambah dan mengatur ukuran tiang
+                function tambahTiang() {
+                    var x = 800, y = 0, w = 50, h = 300;
+                    var acak = Math.floor(Math.random() * 250);//untuk mengacak tinggi tiang yang maksimalnya 250
+                    tiang.push({ "x": x, "y": y - acak, "w": w, "h": h });//menambah data array ke variabel tiang
+                }
+
+                //
+                function selesai() {
+                    clearInterval(interval);//menghentikan fungsi animasi
+                    context.clearRect(0, 0, cW, cH);//membersihkan canvas
+                    latar.render();//menampilkan latar
+                    renderTiang();//menampilkan tiang
+                    context.drawImage(mati, karakter.x, karakter.y);//memanggil gambar buaya mati jika game failed
+
+                    //memberikan keterangan tulisan selesai jika buaya mati
+                    context.font = "Bold 60px arial";
+                    context.fillText("SELESAI", 320, 150);
+
+                    //menampilkan tulisan skor akhir
+                    context.font = "Bold 40px arial";
+                    context.fillText("Skor Anda adalah " + skor, 250, 260);
+
+                }
+                //membuat fungsi tambah skor ketika berhasil melewati tiang
+                var skor = 0, tambahNilai = true;
+                function tambahSkor() {
+                    skor++
+                }
+
+                //membuat fungsi kena agar jika buaya menatap tiang/dinding bawah/dinding atas maka akan mati
+                function kena() {
+                    for (var i = 0; i < tiang.length; i++) {
+                        var t = tiang[i];
+                        //seleksi tiang pertama serta mengatur jarak antar tiang
+                        if ((karakter.x + karakter.w > t.x && karakter.y < t.y + t.h && karakter.x < t.x + t.w) ||
+                            (karakter.x + karakter.w > t.x && karakter.y + karakter.h > t.y + t.h + 200 && karakter.x < t.x + t.w)) {
+                            selesai();
+
+                        } else if (t.x + t.w < karakter.x) { //jika berhasil melewati tiang maka skor bertambah
+                            if (tambahNilai) {
+                                tambahSkor();
+                                tambahNilai = false;
+                            }
+
+                        }
+                    }
+
+                    //jika buaya menabrak dinding maka akan mati dan permainan selesai
+                    if (karakter.y <= 0) { selesai(); }
+                    if (karakter.y + karakter.h > cH) { selesai(); }
+
+                }
+
+                var hitung = 0;
+                //fungsi untuk menjalankan tiang2 dari kanan ke kiri ke canvas serta mencetak tiang
+                function renderTiang() {
+                    for (var i = 0; i < tiang.length; i++) {
+                        var t = tiang[i];
+                        context.drawImage(gambarTiang, t.x--, t.y);//agar tiang atas berjalan dari kanan ke kiri
+                        context.drawImage(gambarTiang, t.x--, t.y + t.h + 200);//memunculkan tiang bawah, yang mana disesuaikan dengan tiang yang atas
+
+                        //eksekusi agar jika tiang sampai tepi maka tiang otomatis di delete untuk menghemat memori
+                        if (t.x + t.w < 0) {
+                            tiang.splice(i, 1);
+                            tambahNilai = true;
+                        }
+                    }
+                    //memunculkan tiang kedua dan seterusnya di jarak 150
+                    hitung++;
+                    if (hitung == 150) {
+                        tambahTiang();
+                        hitung = 0;
+
+                    }
+
+                }
+
+                //fungsi untuk memanggil fungsi lainnya atau fungsi main
+                function animasi() {
+                    context.save();//menyimpan canvas
+                    context.clearRect(0, 0, cW, cH);//membersihkan canvas
+
+                    latar.render(); //memanggil latar
+                    karakter.render(); //memanggil karakter
+
+                    renderTiang();//memanggil tiang
+
+                    //menampilkan skor di kiri atas agar pemain mengetahui skornya
+                    context.font = "Normal 30px Arial";
+                    context.fillText("Skor : " + skor, 20, 60);
+                    kena();
+
+                    context.restore();//mengembalikan ke nilai awal
+                }
+
+                var interval = setInterval(animasi, 30);
+
+                //jika crusor di klik maka buaya akan memantul
+                context.canvas.addEventListener('click', function (event) {
+                    karakter.y -= 70;
+                })
+
+
+            }
+        }
+
+        window.addEventListener('load', function (event) {
+            mulaiKanvas();
+        });
+
+    </script>
+</body>
+
+</html>
